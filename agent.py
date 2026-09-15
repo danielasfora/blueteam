@@ -17,8 +17,49 @@ from support import (MODEL, SYSTEM_PROMPT, call_local, execute_tool, mcp_client,
 MAX_TOOL_CALLS = 8  # Larkspur's own build capped the loop here; then a human takes over.
 
 TONE_ADDENDUM = ""                       # ✏️ Build 4, step 4.1, intelligence lane
-EXTRA_TOOLS: List[Dict[str, Any]] = []   # ✏️ Build 2, step 2.1: schemas for the tools you add
-LOCAL_TOOLS: Dict[str, Any] = {}         # ✏️ Build 2, step 2.1: the functions behind them
+EXTRA_TOOLS: List[Dict[str, Any]] = [
+    {
+        "name": "fare_rules",
+        "description": (
+            "Return the voluntary change, cancellation, and refund rules for this booking's fare family. "
+            "Use this before telling a customer what they can or cannot do voluntarily with their ticket — "
+            "never state fare rules from memory."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pnr": {
+                    "type": "string",
+                    "description": "The booking PNR. The tool resolves the fare family from the booking.",
+                },
+            },
+            "required": ["pnr"],
+        },
+    },
+]   # ✏️ Build 2, step 2.1: schemas for the tools you add
+
+
+_POLICY_CACHE: Dict[str, Any] = {}
+
+
+def _fare_rules(pnr: str) -> Dict[str, Any]:
+    from support import mock_backend as backend
+    if not _POLICY_CACHE:
+        _POLICY_CACHE.update(backend.load_policy())
+    rules = _POLICY_CACHE.get("fare_family_rules", {})
+    try:
+        booking = backend.get_booking_raw(pnr)
+    except backend.NotFound as e:
+        return {"error": str(e)}
+    fare_family = booking.get("fare_family", "")
+    if fare_family not in rules:
+        return {"error": "Unknown fare family: %s" % fare_family}
+    return {"fare_family": fare_family, **rules[fare_family]}
+
+
+LOCAL_TOOLS: Dict[str, Any] = {
+    "fare_rules": _fare_rules,
+}         # ✏️ Build 2, step 2.1: the functions behind them
 
 
 def text_of(response) -> str:
@@ -68,16 +109,15 @@ def run_agent(pnr: str, last_name: str, message: str) -> str:            # ✏�
     answer = ""
     turns = 1
     while response.stop_reason == "tool_use" and turns < MAX_TOOL_CALLS:
-        messages.append({"role": "assistant", "content": text_of(response)})
+        messages.append({"role": "assistant", "content": response.content})
         messages.append({"role": "user", "content": tool_results(response)})
-        answer = text_of(response)
         response = client.messages.create(
             model=MODEL, max_tokens=4096, system=runtime_preamble() + SYSTEM_PROMPT + TONE_ADDENDUM,
             thinking={"type": "adaptive"}, tools=tools, messages=messages,
         )
         turns += 1
 
-    return answer
+    return text_of(response)
 
 
 def tool_list() -> List[Dict[str, Any]]:                   # ✏️ Build 2, step 2.2
@@ -126,7 +166,7 @@ def build_tools() -> List[Dict[str, Any]]:                 # ✏️ Build 1, ste
         },
         {
             "name": "search_alternatives",
-            "description": "search",
+            "description": "Search for alternative Larkspur flights when the customer's flight has been cancelled or delayed by more than 6 hours. Use this to find rebooking options before presenting choices to the customer.",
             "input_schema": {
                 "type": "object",
                 "properties": {"pnr": {"type": "string"}},
