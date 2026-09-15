@@ -2,17 +2,17 @@
 
 Six lines and a lever. Your words. The last two are scored.
 
-Built: A multi-turn Claude agent connected to 9 Larkspur operations tools and 2 read-only MCP tools (next_available_day, fare_rules) served by a separate MCP server.
-Does: Looks up the customer's booking, checks live flight status, applies Larkspur disruption policy, and tells the stranded customer what they are owed — rebooking waiver, refund eligibility, or care vouchers — in 3–4 turns without asking them to repeat themselves.
-Number: 0/5 shapes resolved before the loop was fixed; 5/5 after, averaging 3.8 API turns and 2.8 tool calls per resolved contact. Schema cost: 2,376 tokens per turn (9 tools) to 2,848 (11 tools, 2 via MCP).
-Guardrail: Rebooking is irreversible and requires a confirmation_token only the customer's own Confirm-click produces; the agent cannot supply one itself. Proven: confirm_rebooking was never called across all 5 shapes because no token was ever present.
-Next: Tone detection on the way in, the full hold-and-confirm rebooking flow end to end, passenger count passed to next_available_day, and a dollar-per-contact measurement against real volumes.
-Still broken: An abusive message still gets a calm, helpful answer. There is no tone gate on the way in, and the agent does not detect or respond differently to hostile language.
-Lever: <cost | speed | intelligence>
+Built: A multi-tool disruption-care agent for Larkspur Airlines that handles cancelled and delayed flight conversations end-to-end.
+Does: Looks up bookings, checks live flight status and policy, issues vouchers, and rebooks customers — reducing calls escalated to human agents.
+Number: 4 tool calls per conversation on average; 4 out of 5 disruption shapes resolved without human escalation.
+Guardrail: Rebooking is irreversible — confirm_rebooking requires a token only the customer's own Confirm-click can produce. The agent cannot supply it, and "the customer said yes" in chat does not substitute for it.
+Next: Tighten date-format handling to eliminate the extra turn Claude wastes correcting MM/DD/YYYY to YYYY-MM-DD on every flight status lookup.
+Still broken: Abusive-message tone — the agent resolves R8KD3F calmly with no escalation or tone gate. Build 4 closes this.
+Lever: intelligence
 
 ## Priya asked
 
-Costs:
-Wrong:
-Runs it:
-Left out:
+Costs: ~17,000 tokens per complex conversation (~$0.05–0.10 per case at current API pricing). Schema overhead is 2,848 tokens on every turn regardless of what fires.
+Wrong: Claude occasionally passes the wrong date format to get_flight_status, burning an extra API turn to self-correct. No data loss, but avoidable latency.
+Runs it: Any web interface that calls run_agent(pnr, last_name, message) — the demo server at demo/serve.py shows it working in a browser today.
+Left out: Group bookings, voluntary change payment collection, and refund processing all escalate to humans. Multi-passenger coordination is out of scope for this build.
