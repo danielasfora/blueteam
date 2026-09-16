@@ -136,12 +136,13 @@ def build_tools() -> List[Dict[str, Any]]:                 # ✏️ Build 1, ste
             "name": "check_policy",
             "description": (
                 "Resolve what Larkspur owes this customer for the disruption: rebooking "
-                "waiver, refund path, meal/hotel/ground care, goodwill eligibility and cap, "
-                "and any escalation triggers. cause_code, delay_minutes and status describe "
-                "what get_flight_status told you; fare_family, loyalty_tier and whether this "
-                "is overnight are looked up from the booking, not asked of you. Every "
-                "response carries a policy_row_id. Cite it if you reference this decision "
-                "again."
+                "waiver, refund eligibility, meal/hotel/ground care, goodwill eligibility and cap, "
+                "and any escalation triggers. Call this before telling a customer whether they "
+                "are entitled to a refund — it is the only source of truth for that. "
+                "cause_code, delay_minutes and status describe what get_flight_status told you; "
+                "fare_family, loyalty_tier and whether this is overnight are looked up from the "
+                "booking, not asked of you. Every response carries a policy_row_id. Cite it if "
+                "you reference this decision again."
             ),
             "input_schema": {
                 "type": "object",
@@ -200,8 +201,10 @@ def build_tools() -> List[Dict[str, Any]]:                 # ✏️ Build 1, ste
             "name": "escalate_to_human",
             "description": (
                 "Hand this conversation to a human, with your reasoning attached. Use for "
-                "groups, partner segments, unaccompanied minors, refunds, or anything else "
-                "out of scope. This is the correct outcome for those cases, not a failure."
+                "groups, partner segments, unaccompanied minors, or anything else out of scope. "
+                "For refunds: call check_policy first to determine eligibility, then escalate "
+                "only if the policy confirms a human must execute it. This is the correct "
+                "outcome for those cases, not a failure."
             ),
             "input_schema": {
                 "type": "object",
