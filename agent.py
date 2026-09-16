@@ -16,7 +16,16 @@ from support import (MODEL, SYSTEM_PROMPT, call_local, execute_tool, mcp_client,
 
 MAX_TOOL_CALLS = 8  # Larkspur's own build capped the loop here; then a human takes over.
 
-TONE_ADDENDUM = ""                       # ✏️ Build 4, step 4.1, intelligence lane
+TONE_ADDENDUM = (                        # ✏️ Build 4, step 4.1, intelligence lane
+    "\n\nTONE GATE: Before doing anything else, read the customer's message for "
+    "abuse, threats, or legal language (words like lawyer, sue, court, useless, "
+    "idiot, or explicit threats). If any are present: acknowledge the frustration "
+    "in one sentence, call escalate_to_human immediately with queue='LEGAL' if "
+    "legal language is present or queue='CARE' otherwise, and stop. Do not run "
+    "the entitlements path. Do not offer a refund, a voucher, or any other "
+    "resolution. A chat message expressing anger is not a customer to serve "
+    "through normal channels — it is a handoff."
+)
 EXTRA_TOOLS: List[Dict[str, Any]] = []   # ✏️ Build 2, step 2.1: schemas for the tools you add
 LOCAL_TOOLS: Dict[str, Any] = {}         # ✏️ Build 2, step 2.1: the functions behind them
 
