@@ -1,15 +1,7 @@
 # ACCOUNT.md
 
-Account:
-Workflow:
-Date:
+Account: Oi Telecom
 
-Three lines, and nobody can write them for you.
+Workflow: Customer care for cancellations in the telecommunications industry. A customer contacts support to cancel a service or plan. The agent looks up the account, reads the contract terms and cancellation policy, and resolves standard cancellation requests — including retention offers within policy — without a human. Refunds, disputes, and cases requiring manual contract review stay with a human agent.
 
-The account is a logo. Not a segment, not a vertical. The workflow is one job
-you understand end to end, the way you now understand a disruption chat. Who
-starts it, what it reads, what it may change, and what stays human. The date is
-inside 30 days, for a conversation already in somebody's diary or about to be.
-
-Write them before you close the laptop, while the build is still in your hands,
-and commit the file with the rest of the proof pack.
+Date: 2026-09-25
